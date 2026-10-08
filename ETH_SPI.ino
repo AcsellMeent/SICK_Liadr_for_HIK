@@ -173,6 +173,8 @@ void loop()
 
     double actual_angle = 0;
 
+    Serial.println();
+
     for(int i = 0; i < LENGHT_FOR_SEND; i ++) {
       double prev_angle = 0;
       uint16_t distance = 0;
@@ -196,13 +198,15 @@ void loop()
       }
       if(data[input_data_index-1].angle > (trimed_data[i].angle) - angle_delta/2) {
         distance = data[input_data_index-1].distance;
-        // if(trimed_data[i].angle > 90 && trimed_data[i].angle < 137.5) {
-        //   Serial.printf("angle %f dista %d\n", data[input_data_index-1].angle, distance);
-        // }
+        if(trimed_data[i].angle > 90 && trimed_data[i].angle < 137.5) {
+          Serial.printf("angle %f index %d dista %d\n", data[input_data_index-1].angle, input_data_index-1, distance);
+        }
       }
 
       trimed_data[i].distance = distance;
     }
+
+
 
     // double angle_delta = (double)275.0 / ((double)LENGHT_FOR_SEND - 1);
 
