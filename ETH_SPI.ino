@@ -57,6 +57,11 @@ uint8_t configuration_block_size;
 uint8_t static_data_size;
 
 const size_t LENGHT_FOR_SEND = 1651;
+point_t trimed_data[LENGHT_FOR_SEND];
+
+const double angle_delta = (double)275.0 / ((double)LENGHT_FOR_SEND - 1);
+
+unsigned long send = 0;
 
 void setup()
 {
@@ -140,40 +145,15 @@ void loop()
 
     int slice_point = 0;
 
-    std::vector<point_t> trimed_data(LENGHT_FOR_SEND);
-
-    std::vector<point_t> data;
     size_t number_of_beams = 0;
 
-    for(int i = SCAN_DATA_SIZE - actual_lenght; i < SCAN_DATA_SIZE; i++) {
-      number_of_beams ++;
-      data.push_back(lidar.Data[i]);
-    }
-
-    // Serial.println(actual_lenght);
-
-    // double delta = (double)275 / (actual_lenght - 1);
-    // for(int i=0; i < actual_lenght; i ++) {
-    //     data[i].angle = i*delta;ы
-    // }
-
-    // double step = (double)data.size() / trimed_data.size();
-    // size_t index = 0;
-    // double i = 0;
-
-    // while (round(i) < data.size()) {
-    //     i += step;
-    //     trimed_data[index++] = data[round(i)];
-    // };
-
-    double angle_delta = (double)275.0 / ((double)LENGHT_FOR_SEND - 1);
+    // Serial.printf("SIZE: %d ms %d\n", lidar.ScanDataPoints.size(), millis() - send);
+    // send = millis();
 
     int input_data_index = 1;
     int start_sector_index = 0;
 
     double actual_angle = 0;
-
-    Serial.println();
 
     for(int i = 0; i < LENGHT_FOR_SEND; i ++) {
       double prev_angle = 0;
@@ -193,90 +173,17 @@ void loop()
         break;
       }
       
-      while(data[input_data_index].angle <= (trimed_data[i].angle) + angle_delta/2) {
+      while(lidar.ScanDataPoints[input_data_index].angle <= (trimed_data[i].angle) + angle_delta/2) {
         input_data_index++;
       }
-      if(data[input_data_index-1].angle > (trimed_data[i].angle) - angle_delta/2) {
-        distance = data[input_data_index-1].distance;
-        if(trimed_data[i].angle > 90 && trimed_data[i].angle < 137.5) {
-          Serial.printf("angle %f index %d dista %d\n", data[input_data_index-1].angle, input_data_index-1, distance);
-        }
+      if(lidar.ScanDataPoints[input_data_index-1].angle > (trimed_data[i].angle) - angle_delta/2) {
+        distance = lidar.ScanDataPoints[input_data_index-1].distance;
       }
-
       trimed_data[i].distance = distance;
     }
-
-
-
-    // double angle_delta = (double)275.0 / ((double)LENGHT_FOR_SEND - 1);
-
-    // int input_data_index = 0;
-    // int start_sector_index = 0;
-
-    // double actual_angle = 0;
-
-    // for(int i = 0; i < LENGHT_FOR_SEND; i ++) {
-    //   uint32_t sum_distance = 0;
-    //   uint16_t sum_lenght = 0;
-    //   start_sector_index = input_data_index;
-
-    //   trimed_data[i].angle = (i * angle_delta);
-
-    //   if (slice_point == 0 && trimed_data[i].angle > 137.5) {
-    //     slice_point = i;
-    //   }
-
-    //   if (slice_point != 0) {
-    //     trimed_data[i].angle += 85.0;
-    //   }
-
-    //   // Serial.println();
-    //   // Serial.printf("dista %d\n", data[input_data_index].distance);
-    //   // Serial.printf("sum %d lenght %d start %d end %d\n", sum_distance, sum_lenght, start_sector_index, input_data_index);
-    //   // Serial.printf("angle %f start %f end %f\n", trimed_data[i].angle, data[start_sector_index].angle, data[input_data_index].angle);
-      
-    //   while(data[input_data_index].angle <= (trimed_data[i].angle) + angle_delta/2) {
-    //     // Serial.printf("dista %d\n", data[input_data_index].distance);
-
-    //     if(data[input_data_index].distance == 0) {
-    //       input_data_index++;
-    //       continue;
-    //     }
-    //     sum_distance = data[start_sector_index].distance;
-    //     sum_lenght = 1;
-    //     input_data_index++;
-        
-    //   }
-
-    //   if(input_data_index - start_sector_index == 0) {
-    //     trimed_data[i].distance = 0;
-    //     continue;
-    //   }
-    //   if(sum_lenght != 0) {
-    //     trimed_data[i].distance = uint16_t(sum_distance / sum_lenght);
-    //     // Serial.printf("angle %f dista %d\n", trimed_data[i].angle, trimed_data[i].distance);
-    //   }
-    //   else{
-    //     trimed_data[i].distance = 0;
-    //   }
-
-
-    //   // if(trimed_data[i].distance != 40000) {
-    //   // Serial.printf("res %d\n", trimed_data[i].distance);
-
-    //     // Serial.printf("sum %d lenght %d start %d end %d\n", sum_distance, sum_lenght, start_sector_index, input_data_index);
-    //     // Serial.printf("angle %f start %f end %f\n", trimed_data[i].angle, data[start_sector_index].angle, data[input_data_index].angle);
-
-    //   // }
-    //   // if(sum_lenght > 2) {
-    //     // Serial.println();
-    //     // Serial.printf("sum %d lenght %d start %d end %d\n", sum_distance, sum_lenght, start_sector_index, input_data_index);
-    //     // Serial.printf("angle %f start %f end %f\n", trimed_data[i].angle, data[start_sector_index].angle, data[input_data_index].angle);
-    //   // }
-    // }
     
-    std::reverse(trimed_data.begin(), trimed_data.begin() + slice_point);
-    std::reverse(trimed_data.begin() + slice_point, trimed_data.end());
+    std::reverse(trimed_data, trimed_data + slice_point);
+    std::reverse(trimed_data + slice_point, trimed_data + LENGHT_FOR_SEND);
 
     number_of_beams = LENGHT_FOR_SEND;
 
@@ -373,7 +280,7 @@ void loop()
         
       write_size = max_udp_payload_size - write_offset;
       
-      writeMeasurementData(udp_package + write_offset, trimed_data.begin() + total_measurement_data_offset, write_size, out_sample, out_sample_size);
+      writeMeasurementData(udp_package + write_offset, trimed_data + total_measurement_data_offset, write_size, out_sample, out_sample_size);
       
       total_measurement_data_offset += std::ceil(write_size / (double)MEASUREMENT_DATA_SAMPLE_SIZE);
 
@@ -403,7 +310,7 @@ void loop()
 
 }
 
-void writeMeasurementData(uint8_t* buffer, std::vector<point_t>::iterator data, size_t write_size, uint8_t* out_sample, uint16_t &out_sample_size)
+void writeMeasurementData(uint8_t* buffer, point_t *data, size_t write_size, uint8_t* out_sample, uint16_t &out_sample_size)
 {
     size_t num_of_iteration = write_size / MEASUREMENT_DATA_SAMPLE_SIZE;
     
